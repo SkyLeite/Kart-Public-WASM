@@ -27,6 +27,7 @@
 #include "d_netfil.h"
 #include "d_clisrv.h"
 #include "z_zone.h"
+#include "i_websocket.h"
 #include "i_tcp.h"
 #include "d_main.h" // srb2home
 
@@ -1012,6 +1013,7 @@ static boolean ShouldDropPacket(void)
 //
 boolean HSendPacket(INT32 node, boolean reliable, UINT8 acknum, size_t packetlength)
 {
+	CONS_Printf("SENDING PACKET HSENDPACKET");
 	doomcom->datalength = (INT16)(packetlength + BASEPACKETSIZE);
 	if (node == 0) // Packet is to go back to us
 	{
@@ -1287,8 +1289,9 @@ boolean D_CheckNetGame(void)
 	netgame = I_InitNetwork();
 	if (!netgame && !I_NetOpenSocket)
 	{
+		CONS_Printf("Initing TCP Network LOL?");
 		D_SetDoomcom();
-		netgame = I_InitTcpNetwork();
+		netgame = I_InitWebsocketNetwork();
 	}
 
 	if (netgame)
