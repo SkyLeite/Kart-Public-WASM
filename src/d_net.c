@@ -1013,7 +1013,6 @@ static boolean ShouldDropPacket(void)
 //
 boolean HSendPacket(INT32 node, boolean reliable, UINT8 acknum, size_t packetlength)
 {
-	CONS_Printf("SENDING PACKET HSENDPACKET");
 	doomcom->datalength = (INT16)(packetlength + BASEPACKETSIZE);
 	if (node == 0) // Packet is to go back to us
 	{
