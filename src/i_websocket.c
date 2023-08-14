@@ -1,4 +1,6 @@
+#include "d_clisrv.h"
 #include "doomdef.h"
+#include "doomtype.h"
 #include "i_system.h"
 #include "i_time.h"
 #include "i_net.h"
@@ -13,24 +15,31 @@
 
 #include <emscripten/emscripten.h>
 #include <emscripten/websocket.h>
+#include <stdint.h>
 #include <stdio.h>
+#include <sys/types.h>
 
 static boolean nodeconnected[MAXNETNODES+1];
 static EMSCRIPTEN_WEBSOCKET_T socket;
 
+static boolean is_new_node = true;
+
+struct myPacket {
+  char data[1024];
+  int length;
+};
+
+static struct myPacket pending_packets[1024];
+static int packet_index = -1;
+
+
 EM_BOOL onopen(int eventType,
                const EmscriptenWebSocketOpenEvent *websocketEvent,
                void *userData) {
-  CONS_Printf("onopen");
+  CONS_Printf("WebSocket connection opened");
 
   socket = websocketEvent->socket;
 
-  EMSCRIPTEN_RESULT result;
-  result = emscripten_websocket_send_utf8_text(websocketEvent->socket, "hoge");
-  if (result) {
-    CONS_Printf("Failed to emscripten_websocket_send_utf8_text(): %d\n",
-                result);
-  }
   return EM_TRUE;
 }
 EM_BOOL onerror(int eventType,
@@ -47,32 +56,67 @@ EM_BOOL onclose(int eventType,
 
   return EM_TRUE;
 }
+
+static UINT32 Checksum(uint32_t * data, int length)
+{
+	UINT32 c = 0x1234567;
+	const INT32 l = length - 4;
+	const UINT8 *buf = (UINT8 *)data + 4;
+	INT32 i;
+
+	for (i = 0; i < l; i++, buf++)
+		c += (*buf) * (i+1);
+
+	return LONG(c);
+}
+
 EM_BOOL onmessage(int eventType,
                   const EmscriptenWebSocketMessageEvent *websocketEvent,
                   void *userData) {
-  CONS_Printf("onmessage");
-  if (websocketEvent->isText) {
-    // For only ascii chars.
-    CONS_Printf("message: %s\n", websocketEvent->data);
-  }
 
-  EMSCRIPTEN_RESULT result;
-  result =
-      emscripten_websocket_close(websocketEvent->socket, 1000, "no reason");
-  if (result) {
-    CONS_Printf("Failed to emscripten_websocket_close(): %d\n", result);
-  }
+  struct myPacket newPacket;
+  M_Memcpy(&newPacket.data, websocketEvent->data, websocketEvent->numBytes);
+  newPacket.length = websocketEvent->numBytes;
+
+
+  packet_index = packet_index + 1;
+  pending_packets[packet_index] = newPacket;
+
   return EM_TRUE;
 }
 
 static void WS_Send(void) {
-    CONS_Printf("WS: Sending packet... \n");
+    char * dc = doomcom->data;
+    doomdata_t * newnetbuffer = (doomdata_t *)(void *)&doomcom->data;
     int result = emscripten_websocket_send_binary(socket, (char *)&doomcom->data, doomcom->datalength);
-    CONS_Printf("Result: %d", result);
 }
 static boolean WS_Get(void) {
-    doomcom->remotenode = -1; // no packet
-    return false;
+    struct myPacket last_packet = pending_packets[packet_index];
+
+    if (packet_index < 0) {
+      doomcom->remotenode = -1; // no packet
+    } else {
+      doomcom->datalength = last_packet.length;
+
+      /* netbuffer = (doomdata_t *)(void *)&last_packet.data; */
+
+      M_Memcpy(&doomcom->data, last_packet.data, last_packet.length);
+      doomcom->remotenode = nodeconnected[1];
+
+      struct myPacket emptyPacket;
+      pending_packets[packet_index] = emptyPacket;
+
+      if (packet_index > -1) {
+        packet_index = packet_index - 1;
+      }
+
+      if (is_new_node == true) {
+        is_new_node = false;
+        return true;
+      }
+    }
+
+    return is_new_node;
 }
 static void WS_CloseSocket(void) {}
 static void WS_FreeNodenum(INT32 numnode) {}
@@ -124,7 +168,7 @@ boolean WS_OpenSocket(void) {
 
   nodeconnected[BROADCASTADDR] = true;
 
-  EmscriptenWebSocketCreateAttributes ws_attrs = {"wss://ws.postman-echo.com/raw",
+  EmscriptenWebSocketCreateAttributes ws_attrs = {"ws://127.0.0.1:1234",
                                                   NULL, EM_TRUE};
 
   EMSCRIPTEN_WEBSOCKET_T ws = emscripten_websocket_new(&ws_attrs);
@@ -138,7 +182,12 @@ boolean WS_OpenSocket(void) {
       return false;
   }
 
-  socket = ws;
+  /* socket = ws; */
+
+  while (socket == NULL) {
+    CONS_Printf("Waiting for connection...");
+    emscripten_sleep(100);
+  }
 
   I_NetSend = WS_Send;
   I_NetGet = WS_Get;
