@@ -991,7 +991,7 @@ static menuitem_t MP_MainMenu[] =
 
 	{IT_HEADER, NULL, "Host a game", NULL, 100-24},
 #ifndef NONET
-	{IT_STRING|IT_CALL,       NULL, "Internet/LAN...",           M_PreStartServerMenu,        110-24},
+	{IT_GRAYEDOUT,       NULL, "Internet/LAN...",           M_PreStartServerMenu,        110-24},
 #else
 	{IT_GRAYEDOUT,            NULL, "Internet/LAN...",           NULL,                     110-24},
 #endif
@@ -999,11 +999,11 @@ static menuitem_t MP_MainMenu[] =
 
 	{IT_HEADER, NULL, "Join a game", NULL, 132-24},
 #ifndef NONET
-	{IT_STRING|IT_CALL,       NULL, "Internet server browser...",M_PreConnectMenu,   142-24},
-	{IT_STRING|IT_KEYHANDLER, NULL, "Specify IPv4 address:",     M_HandleConnectIP,        150-24},
+	{IT_GRAYEDOUT,       NULL, "Internet server browser...",M_PreConnectMenu,   142-24},
+	{IT_STRING|IT_KEYHANDLER, NULL, "Specify WebSocket address:",     M_HandleConnectIP,        150-24},
 #else
 	{IT_GRAYEDOUT,            NULL, "Internet server browser...",NULL,                     142-24},
-	{IT_GRAYEDOUT,            NULL, "Specify IPv4 address:",     NULL,                     150-24},
+	{IT_GRAYEDOUT,            NULL, "Specify WebSocket address:",     NULL,                     150-24},
 #endif
 	//{IT_HEADER, NULL, "Player setup", NULL, 80},
 	//{IT_STRING|IT_CALL,       NULL, "Name, character, color...", M_SetupMultiPlayer,       90},
@@ -1249,7 +1249,7 @@ static menuitem_t OP_Mouse2OptionsMenu[] =
 static menuitem_t OP_VideoOptionsMenu[] =
 {
 	{IT_STRING | IT_CALL,	NULL,	"Set Resolution...",	M_VideoModeMenu,		 10},
-	{IT_STRING|IT_CVAR,		NULL,	"Fullscreen",			&cv_fullscreen,			 20},
+	{IT_GRAYEDOUT,		NULL,	"Fullscreen",			&cv_fullscreen,			 20},
 	{IT_STRING | IT_CVAR | IT_CV_SLIDER,
 							NULL,	"Gamma",				&cv_usegamma,			 30},
 
@@ -9236,7 +9236,7 @@ static void M_StartServerMenu(INT32 choice)
 // CONNECT VIA IP
 // ==============
 
-static char setupm_ip[28];
+static char setupm_ip[1024];
 #endif
 static UINT8 setupm_pselect = 1;
 
@@ -9269,12 +9269,17 @@ Update the maxplayers label...
 	V_DrawFill(x+5, y+4+5, /*16*8 + 6,*/ BASEVIDWIDTH - 2*(x+5), 8+6, 239);
 
 	// draw name string
-	V_DrawString(x+8,y+12, V_ALLOWLOWERCASE, setupm_ip);
+	const int l = strlen(setupm_ip);
+	char *setupm_ip_suffix = &setupm_ip;
+	if (l >= 27) {
+		setupm_ip_suffix = &setupm_ip[l-27];
+	}
+	V_DrawString(x+8,y+12, V_ALLOWLOWERCASE, setupm_ip_suffix);
 
 	// draw text cursor for name
 	if (itemOn == 8
 	    && skullAnimCounter < 4)   //blink cursor
-		V_DrawCharacter(x+8+V_StringWidth(setupm_ip, V_ALLOWLOWERCASE),y+12,'_',false);
+		V_DrawCharacter(x+8+V_StringWidth(setupm_ip_suffix, V_ALLOWLOWERCASE),y+12,'_',false);
 #endif
 
 	// character bar, ripped off the color bar :V
@@ -9488,7 +9493,7 @@ static void M_HandleConnectIP(INT32 choice)
 
 		default:
 			l = strlen(setupm_ip);
-			if (l >= 28-1)
+			if (l >= 1024-1)
 				break;
 
 			// Rudimentary number and period enforcing - also allows letters so hostnames can be used instead
