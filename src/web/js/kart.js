@@ -74,6 +74,9 @@ export class Kart {
 
   requestFullscreen = () => {
     this.canvas.requestFullscreen();
+    try {
+      navigator.keyboard.lock([ "Escape" ]);
+    } catch (_) {}
   };
 
   init = () => {
