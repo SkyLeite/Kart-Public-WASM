@@ -21,3 +21,7 @@ app.ports.addFile.subscribe((message) => {
 
   input.click();
 });
+
+window.addEventListener("keydown", (e) => {
+  if (document.fullscreenElement == null && e.key == "F11") kart.requestFullscreen();
+}, true);
