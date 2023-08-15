@@ -3045,7 +3045,9 @@ static void Command_connect(void)
 		}
 		else if (I_NetOpenSocket)
 		{
-			I_NetOpenSocket();
+			if (!I_NetOpenSocket()) {
+				return;
+			}
 			netgame = true;
 			multiplayer = true;
 
