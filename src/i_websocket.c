@@ -25,7 +25,7 @@ static EMSCRIPTEN_WEBSOCKET_T socket;
 static boolean is_new_node = true;
 
 struct myPacket {
-  char data[1024];
+  char data[MAXPACKETLENGTH];
   int length;
 };
 
