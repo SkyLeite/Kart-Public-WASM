@@ -1,3 +1,22 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+canvas {
+    image-rendering: pixelated;
+    width: 80vw;
+    height: 50vw;
+}
+
+@media (min-aspect-ratio: 16/10) {
+    canvas {
+        width: 128vh;
+        height: 80vh;
+    }
+}
+
+canvas:fullscreen {
+    border: 0;
+    border-radius: 0;
+    background-color: black;
+}
