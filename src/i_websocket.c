@@ -150,8 +150,12 @@ static bannednode_t WS_bannednode[MAXNETNODES+1]; /// \note do we really need th
 
 // No need to hole punch with a Websocket connection :)
 // Thanks technology
-static void WS_RequestHolePunch(INT32 node) {}
-static void WS_RegisterHolePunch(void) {}
+static void WS_RequestHolePunch(INT32 node) {
+  return;
+}
+static void WS_RegisterHolePunch(void) {
+  return;
+}
 
 boolean WS_OpenSocket(void) {
   CONS_Printf("Socket being opened... fuck");
