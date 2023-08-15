@@ -172,7 +172,7 @@ boolean WS_OpenSocket(void) {
 
   nodeconnected[BROADCASTADDR] = true;
 
-  EmscriptenWebSocketCreateAttributes ws_attrs = {"ws://127.0.0.1:1234",
+  EmscriptenWebSocketCreateAttributes ws_attrs = {COM_Argv(1),
                                                   NULL, EM_TRUE};
 
   EMSCRIPTEN_WEBSOCKET_T ws = emscripten_websocket_new(&ws_attrs);
