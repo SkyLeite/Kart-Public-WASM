@@ -208,6 +208,12 @@ boolean WS_OpenSocket(void) {
 boolean I_InitWebsocketNetwork(void) {
   boolean is_server = false;
 
+  if (M_CheckParm("-connect") && M_IsNextParm()) {
+    COM_BufAddText("connect \"");
+    COM_BufAddText(M_GetNextParm());
+    COM_BufAddText("\"\n");
+  }
+
   I_NetOpenSocket = WS_OpenSocket;
   I_Ban = WS_Ban;
   I_ClearBans = WS_ClearBans;
