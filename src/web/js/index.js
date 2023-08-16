@@ -8,7 +8,8 @@ const kart = new Kart(app);
 
 app.ports.startGame.subscribe(() => {
   kart.init();
-  if (navigator.maxTouchPoints > 0) makeFakeGamepad();
+  const matchMedia = window.matchMedia || window.msMatchMedia;
+  if (!matchMedia("(any-pointer:fine)").matches) makeFakeGamepad();
 });
 app.ports.listWads.subscribe(() => kart.Command_ListWADS_f());
 app.ports.requestFullScreen.subscribe(() => kart.requestFullscreen());
