@@ -20,3 +20,7 @@ canvas:fullscreen {
     border-radius: 0;
     background-color: black;
 }
+
+* {
+    touch-action: none;
+}
