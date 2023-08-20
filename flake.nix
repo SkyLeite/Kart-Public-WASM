@@ -16,7 +16,7 @@
     in {
       packages.x86_64-linux.wasm = srb2kart-wasm;
       packages.x86_64-linux.web = srb2kart-web;
-      packages.x86_64-linux.default = srb2kart;
+      packages.x86_64-linux.srb2kart = srb2kart;
       packages.x86_64-linux.debug = srb2kart-debug;
     };
 }
